@@ -1,0 +1,21 @@
+# RA-LWLM 依赖 / dependencies
+#
+# 集群上不要直接 pip install（会拉一份几 GB 的 torch 覆盖模块里的版本）；
+# 先 module load + source 虚拟环境，缺什么再用 pip install --no-deps 单独装。
+# On the cluster do NOT plain `pip install` (it pulls a multi-GB torch that shadows
+# the module build). Load the modules and the venv first, then add what is missing
+# with `pip install --no-deps <pkg>`.
+
+# 训练与评测 / training and evaluation
+torch>=2.1
+pytorch-lightning>=2.0
+numpy
+h5py
+scipy
+torchvision          # fm/model.py 里的 resnet34 组件 / used by a component in fm/model.py
+tensorboardX         # 训练曲线 / training curves
+
+# 数据集生成（只在生成数据时需要，必须在 GPU 节点）/ dataset generation (GPU nodes only)
+# sionna>=1.0
+# matplotlib         # 场景拓扑图 / scene topology plots
+# DeepMIMOv3         # 仅跨数据集验证用 / only for the cross-dataset check

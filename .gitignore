@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+results/**
+!results/.gitkeep
+jobs/slurm-*.out
+jobs/slurm-*.err
