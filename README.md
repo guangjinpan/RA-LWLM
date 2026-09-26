@@ -239,41 +239,6 @@ python gen_deepmimo_scenes.py --bs 1 --mode corner --az 45      # 需在 GPU 节
 
 ---
 
-## 6. 画图
-
-评测脚本给出的 CDF 是经验 CDF（1000 个点，横轴是排序后的误差）。要画得平滑一些：
-
-```bash
-python ra_lwlm/tools/smooth_cdf.py results/ra_lwlm_n4000/us/ra_lwlm_cdf.txt --n_grid 1000
-# → results/ra_lwlm_n4000/us/ra_lwlm_cdf_smooth.txt
-```
-
-高斯核平滑（在 0 处反射，保证 F(0)=0、单调、末点为 1），默认按**纵轴等间隔**采样：
-p = 0.001, 0.002, …, 1.000，横坐标由平滑 CDF 反解得到。`--bw` 是带宽倍数（>1 更平滑），
-`--x_uniform` 切回横轴等间隔。这个脚本是纯 Python，登录节点可直接运行。
-
----
-
-## 7. 参考结果（论文主配置：20 个训练场景，每场景 4000 个参考样本）
-
-| 划分 | 均值 (m) | 中值 (m) | 90% (m) |
-|---|---|---|---|
-| SS（见过的场景） | 0.75 | 0.45 | 1.52 |
-| US（未见场景，零样本） | 0.89 | 0.53 | 1.83 |
-
-本仓库用已有的 checkpoint 复核过 US 一栏（10 个未见场景 × 1000 个 query = 10000 个样本）：
-
-```
-  group  |    mean  median     p90
-  ALL    |   0.887   0.525   1.829
-  LOS    |   0.552   0.372   1.163
-  NLOS   |   1.283   0.826   2.538
-```
-
-NLOS 的误差约是 LOS 的 2.3 倍。复现时如果数字差得多，先按下面的清单查。
-
----
-
 ## 8. 常见问题
 
 * **登录节点 import torch / sionna 报错**：架构不同，必须 `sbatch` 到 GPU 节点。
