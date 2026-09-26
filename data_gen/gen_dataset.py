@@ -9,8 +9,9 @@ gen_dataset.py
 场景之间的无线配置是随机的（BS 高度 15~20 m、方位角 25°~65°、带宽 5/10/20 MHz、
 天线数 8/16/32），这是"跨场景"实验的基础。
 
-  --fixed_cfg 1  固定配置（h=18 m, az=45°, 10 MHz, 32 天线），用于生成未见场景
-                 测试集，避免测试集的难度被随机配置搅乱。
+  --fixed_cfg 1  只固定基站几何（h=18 m, az=45°），带宽与天线数仍然随机采样。
+                 未见场景测试集用它：几何固定让各测试场景之间可比，而带宽/天线数
+                 保持变化，才能检验模型对未见无线配置的泛化。
 
 输出 / output: {output_dir}/scene_{scene_id:03d}/{ue_idx:05d}.h5py
                {output_dir}/scene_{scene_id:03d}/config.json
@@ -22,9 +23,10 @@ compute the channels of n_ue UEs in batches. The radio configuration is randomis
 across scenes (BS height 15–20 m, azimuth 25°–65°, bandwidth 5/10/20 MHz, 8/16/32
 antennas), which is what makes the cross-scene experiments meaningful.
 
-  --fixed_cfg 1  freeze the configuration (h=18 m, az=45°, 10 MHz, 32 antennas) —
-                 used for the unseen-scene test set so that its difficulty is not
-                 confounded by a random configuration.
+  --fixed_cfg 1  freeze only the BS geometry (h=18 m, az=45°) while still sampling the
+                 bandwidth and the antenna count. The unseen-scene test set uses this:
+                 fixed geometry keeps the test scenes comparable, while the varying
+                 radio configuration is what probes generalisation to unseen setups.
 
 用法 / usage:
     python gen_dataset.py --scene_start 0   --scene_end 20                 # 训练场景 / training scenes
@@ -52,8 +54,9 @@ parser.add_argument('--output_dir',  type=str, default=None,
 parser.add_argument('--synthetic_array', type=int, default=0,
                     help='PathSolver synthetic_array 参数（0=False, 1=True）/ PathSolver synthetic_array')
 parser.add_argument('--fixed_cfg', type=int, default=0,
-                    help='1=固定无线配置（未见场景测试集用）/ 1 = freeze the radio config '
-                         '(h=18 m, az=45 deg, 10 MHz, 32 antennas), used for the unseen test set')
+                    help='1=固定基站几何 h=18 m / az=45°（带宽与天线数仍随机），未见场景测试集用 / '
+                         '1 = freeze the BS geometry to h=18 m, az=45 deg (bandwidth and antenna '
+                         'count stay random); used for the unseen test set')
 args = parser.parse_args()
 
 import sys as _sys, os as _os
@@ -219,17 +222,17 @@ for scene_id in range(args.scene_start, args.scene_end):
     print(f"\n{'='*60}")
     print(f"Scene {scene_id}  [{args.scene_start}~{args.scene_end-1}]  seed={seed}")
 
-    # ── 1. 采样本场景的无线参数（与建筑布局独立；--fixed_cfg 时固定）
-    #    Sample this scene's radio parameters (independent of the layout;
-    #    frozen when --fixed_cfg is set)
+    # ── 1. 采样本场景的无线参数（与建筑布局独立）
+    #    Sample this scene's radio parameters (independent of the building layout)
     rng = np.random.default_rng(seed)
-    if args.fixed_cfg:
-        bs_height, bs_az, bandwidth, n_ant = 18.0, 45.0, 10e6, 32
+    if args.fixed_cfg:                                 # 未见场景测试集 / unseen test set
+        bs_height, bs_az = 18.0, 45.0                  # 几何固定 / geometry frozen
     else:
         bs_height  = float(rng.uniform(15.0, 20.0))
-        bs_az      = float(rng.uniform(25.0, 65.0))   # 中心 45°，±20° / 45 deg ± 20 deg
-        bandwidth  = float(rng.choice([5e6, 10e6, 20e6]))
-        n_ant      = int(rng.choice([8, 16, 32]))
+        bs_az      = float(rng.uniform(25.0, 65.0))    # 中心 45°，±20° / 45 deg ± 20 deg
+    # 带宽与天线数两种模式下都随机 / bandwidth and antenna count are random in both modes
+    bandwidth  = float(rng.choice([5e6, 10e6, 20e6]))
+    n_ant      = int(rng.choice([8, 16, 32]))
 
     print(f"  参数: BS height={bs_height:.1f}m  azimuth={bs_az:.1f}°  "
           f"bandwidth={bandwidth/1e6:.0f}MHz  n_ant={n_ant}")
