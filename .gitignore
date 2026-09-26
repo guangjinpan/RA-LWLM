@@ -4,3 +4,4 @@ results/**
 !results/.gitkeep
 jobs/slurm-*.out
 jobs/slurm-*.err
+jobs/
